@@ -783,6 +783,17 @@ class file_storage {
     }
 
     /**
+     * Delete area file for the file record. Used by the cron clean up.
+     *
+     * @param stdClass $filerecord: record from the table file for the record that needs to be deleted.
+     * @return bool success: true
+     */
+    public function delete_area_file_recordset(stdClass $filerecord) {
+        $this->get_file_instance($filerecord)->delete();
+        return true;
+    }
+
+    /**
      * Delete all the files from certain areas where itemid is limited by an
      * arbitrary bit of SQL.
      *
@@ -2163,8 +2174,8 @@ class file_storage {
                  WHERE component = 'user' AND filearea = 'draft' AND filepath = '/' AND filename = '.'
                        AND timecreated < :old";
         $rs = $DB->get_recordset_sql($sql, array('old'=>$old));
-        foreach ($rs as $dir) {
-            $this->delete_area_files($dir->contextid, $dir->component, $dir->filearea, $dir->itemid);
+        foreach ($rs as $filerecord) {
+            $this->delete_area_file_recordset($filerecord);
         }
         $rs->close();
         mtrace('done.');
@@ -2196,15 +2207,15 @@ class file_storage {
             // Delete files that are associated with a context that no longer exists.
             mtrace('Cleaning up files from deleted contexts... ', '');
             cron_trace_time_and_memory();
-            $sql = "SELECT DISTINCT f.contextid
+            $sql = "SELECT f.*
                     FROM {files} f
                     LEFT OUTER JOIN {context} c ON f.contextid = c.id
                     WHERE c.id IS NULL";
             $rs = $DB->get_recordset_sql($sql);
             if ($rs->valid()) {
                 $fs = get_file_storage();
-                foreach ($rs as $ctx) {
-                    $fs->delete_area_files($ctx->contextid);
+                foreach ($rs as $filerecord) {
+                    $fs->delete_area_file_recordset($filerecord);
                 }
             }
             $rs->close();
