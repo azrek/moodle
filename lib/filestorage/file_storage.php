@@ -782,8 +782,8 @@ class file_storage {
     /**
      * Delete area file for the file record. Used by the cron clean up.
      *
-     * @param stdClass $filerecord: record from the table file for the record that needs to be deleted.
-     * @return bool success: true
+     * @param stdClass $filerecord record from the table file for the record that needs to be deleted.
+     * @return bool success true
      */
     public function delete_area_file_recordset(stdClass $filerecord) {
         $this->get_file_instance($filerecord)->delete();
