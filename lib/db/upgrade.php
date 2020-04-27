@@ -2194,8 +2194,12 @@ function xmldb_main_upgrade($oldversion) {
             $DB->delete_records('competency_userevidencecomp', ['userevidenceid' => $userevidence->id]);
             $DB->delete_records('competency_userevidence', ['id' => $userevidence->id]);
 
-            $context = context_user::instance($userevidence->userid);
-            $fs->delete_area_files($context->id, 'core_competency', 'userevidence', $userevidence->id);
+            try {
+                $context = context_user::instance($userevidence->userid);
+                $fs->delete_area_files($context->id, 'core_competency', 'userevidence', $userevidence->id);
+            } catch (dml_exception $e) {
+                // Skip records that don't have a user context.
+            }
         }
 
         $sql = "SELECT cp.id
